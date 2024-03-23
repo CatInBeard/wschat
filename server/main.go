@@ -15,7 +15,35 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleConnections(w http.ResponseWriter, r *http.Request) {
+type ClientManager struct {
+	clients   map[*websocket.Conn]struct{}
+	broadcast chan []byte
+}
+
+func NewClientManager() *ClientManager {
+	manager := &ClientManager{
+		clients:   make(map[*websocket.Conn]struct{}),
+		broadcast: make(chan []byte),
+	}
+
+	go manager.run()
+	return manager
+}
+
+func (manager *ClientManager) run() {
+	for {
+		select {
+		case message := <-manager.broadcast:
+			for client := range manager.clients {
+				if err := client.WriteMessage(websocket.TextMessage, message); err != nil {
+					log.Println("Error broadcasting message:", err)
+				}
+			}
+		}
+	}
+}
+
+func (manager *ClientManager) handleConnections(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Panic("Upgrade failed:", err)
@@ -24,23 +52,26 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
+	manager.clients[ws] = struct{}{}
+
 	for {
-		messageType, message, err := ws.ReadMessage()
+		_, message, err := ws.ReadMessage()
 		if err != nil {
-			log.Println(err)
+			log.Panic(err)
 			break
 		}
 		log.Printf("Received: %s", message)
 
-		if err := ws.WriteMessage(messageType, message); err != nil {
-			log.Println(err)
-			break
-		}
+		manager.broadcast <- message
 	}
+
+	delete(manager.clients, ws)
 }
 
 func main() {
-	http.HandleFunc("/ws", handleConnections)
+	manager := NewClientManager()
+
+	http.HandleFunc("/ws", manager.handleConnections)
 	log.Println("http server started on :8080")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

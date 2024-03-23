@@ -20,7 +20,7 @@ const Wschat = () => {
         socket.send(JSON.stringify(message))
     }
 
-    useEffect(() => {
+    const wsConnect = () => {
         const socket = new WebSocket("ws://localhost:8080/ws")
 
         socket.addEventListener("open", event => {
@@ -34,11 +34,14 @@ const Wschat = () => {
         socket.addEventListener("close", (event) => {
             setConncetionStatus("closed") 
             setTimeout(() => {
-                const socket = new WebSocket("ws://localhost:8080/ws")
-                setSocket(socket)
+                wsConnect()
             }, 1000)
         });
         setSocket(socket)
+    }
+
+    useEffect(() => {
+        wsConnect()
     }, []);
 
 
