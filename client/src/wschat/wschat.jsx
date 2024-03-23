@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from 'react-redux'
 
 import SendForm from "./sendForm";
-import {addMessage} from "../reducers/messages"
+import { addMessage } from "../reducers/messages"
+import WsClient from "./wsClient"
 
 const Wschat = () => {
 
@@ -10,39 +11,23 @@ const Wschat = () => {
     const messages = useSelector((state) => state.messages.messages)
 
     let [connectionStatus, setConncetionStatus] = useState("Not set")
-    let [socket, setSocket] = useState()
+    let [wsClient, setWsClient] = useState(null)
+
 
     let pushMessage = (message) => {
         dispatch(addMessage(message))
     }
 
-    let sendAction = (message) => {
-        socket.send(JSON.stringify(message))
-    }
-
-    const wsConnect = () => {
-        const socket = new WebSocket("ws://localhost:8080/ws")
-
-        socket.addEventListener("open", event => {
-            setConncetionStatus("established")
-        });
-
-        socket.addEventListener("message", event => {
-            let message = JSON.parse(event.data)
-            pushMessage(message)
-        });
-        socket.addEventListener("close", (event) => {
-            setConncetionStatus("closed") 
-            setTimeout(() => {
-                wsConnect()
-            }, 1000)
-        });
-        setSocket(socket)
-    }
-
     useEffect(() => {
-        wsConnect()
-    }, []);
+        if (!wsClient) {
+            setWsClient(new WsClient(setConncetionStatus, pushMessage))
+        }
+    }, [])
+
+    let sendAction = (message) => {
+        wsClient.send(message)
+    }
+
 
 
     if (messages.length > 0) {
