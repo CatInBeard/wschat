@@ -7,7 +7,12 @@ const MessagesSlice = createSlice({
     },
     reducers: {
         addMessage: (state, action) => {
-            state.messages = [action.payload, ...state.messages]
+            let message = action.payload
+            const now = new Date();
+            const options = {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+            const locale = navigator.language;
+            message.date = new Intl.DateTimeFormat(locale, options).format(now);
+            state.messages = [message, ...state.messages]
         }
     }
 })

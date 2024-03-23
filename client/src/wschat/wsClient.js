@@ -15,7 +15,7 @@ class WsClient {
     }
 
     socketConnect() {
-        this.socket = new WebSocket("ws://localhost:8080/ws")
+        this.socket = new WebSocket("ws://"+window.location.hostname+":8080/ws")
 
         this.socket.addEventListener("open", event => {
             this.setConncetionStatus("established")
@@ -29,6 +29,7 @@ class WsClient {
             this.setConncetionStatus("closed")
             setTimeout(() => {
                 this.socketConnect()
+                console.log("Try to reconnect")
             }, 1000)
         });
     }

@@ -34,13 +34,18 @@ const Wschat = () => {
         return <>
             <h2>Messages list:</h2>
             <SendForm sendAction={sendAction} />
+            <p>Connection status: {connectionStatus}</p>
             {messages.map((message) => <div className="card mt-2">
+                <div className="card-header">
+                    {message.date}
+                </div>
                 <div className="card-body">
-                    {message.text}
+                    <p class="card-text">
+                        {message.text}
+                    </p>
                 </div>
             </div>
             )}
-            <p>Connection status: {connectionStatus}</p>
         </>;
     }
     else {
