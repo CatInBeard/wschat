@@ -1,0 +1,20 @@
+version: '3.0'
+services:
+  server:
+    image: golang:alpine3.19
+    working_dir: /app
+    volumes:
+      - ./server/:/app
+    command: go run main.go
+    restart: always
+    ports:
+      - 8080:8080
+  client:
+    image: node:lts-alpine3.19
+    working_dir: /app
+    volumes:
+      - ./client/:/app
+    command: npm start
+    restart: always
+    ports:
+      - 3000:3000
